@@ -3,9 +3,9 @@ spring:
     name: backend
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/wanderwise
-    username: postgres
-    password: vivek1224@nigam
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
 
   jpa:
     hibernate:
@@ -18,8 +18,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: your_email@gmail.com
-    password: your_app_password
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -29,8 +29,8 @@ spring:
 
   security:
     user:
-      name: user
-      password: pass123
+      name: ${SECURITY_USERNAME:user}
+      password: ${SECURITY_PASSWORD:pass123}
 
 server:
-  port: 8080
+  port: ${PORT:8080}
