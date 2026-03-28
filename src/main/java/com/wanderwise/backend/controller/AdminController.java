@@ -13,7 +13,14 @@ public class AdminController {
 
     @PostMapping("/refresh")
     public String refresh() {
-        dataRefreshService.refreshData();
-        return "Data refreshed successfully";
+        new Thread(() -> {
+            try {
+                dataRefreshService.refreshData();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+
+        return "Refresh started in background";
     }
 }
