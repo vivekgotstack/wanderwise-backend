@@ -35,23 +35,21 @@ public class DataRefreshService {
     }
 
     private final List<String[]> routes = List.of(
-            new String[]{"DEL", "MUM"},
-            new String[]{"DEL", "BLR"},
-            new String[]{"DEL", "HYD"},
-            new String[]{"MUM", "BLR"},
-            new String[]{"BLR", "HYD"},
-            new String[]{"DEL", "CCU"},
-            new String[]{"DEL", "MAA"},
-            new String[]{"MUM", "GOI"},
-            new String[]{"DEL", "LKO"}
-    );
+            new String[] { "DEL", "MUM" },
+            new String[] { "DEL", "BLR" },
+            new String[] { "DEL", "HYD" },
+            new String[] { "MUM", "BLR" },
+            new String[] { "BLR", "HYD" },
+            new String[] { "DEL", "CCU" },
+            new String[] { "DEL", "MAA" },
+            new String[] { "MUM", "GOI" },
+            new String[] { "DEL", "LKO" });
 
     private final List<String[]> airlines = List.of(
-            new String[]{"IndiGo", "6E"},
-            new String[]{"Air India", "AI"},
-            new String[]{"Vistara", "UK"},
-            new String[]{"Akasa Air", "QP"}
-    );
+            new String[] { "IndiGo", "6E" },
+            new String[] { "Air India", "AI" },
+            new String[] { "Vistara", "UK" },
+            new String[] { "Akasa Air", "QP" });
 
     public void refreshData() {
 
@@ -65,18 +63,22 @@ public class DataRefreshService {
         try {
             log.warn("🔥 STARTING MONTHLY DATA REFRESH");
 
-            bookingRepository.deleteAll();
-            seatRepository.deleteAll();
-            flightRepository.deleteAll();
+            // bookingRepository.deleteAll();
+            // seatRepository.deleteAll();
+            // flightRepository.deleteAll();
 
-            int DAYS = 5;     // 🔥 SAFE
-            int SLOTS = 3;    // 🔥 SAFE
-            int SEATS = 20;   // 🔥 SAFE
+            int DAYS = 5; // 🔥 SAFE
+            int SLOTS = 3; // 🔥 SAFE
+            int SEATS = 20; // 🔥 SAFE
 
             List<Flight> flights = new ArrayList<>();
 
             for (int day = 0; day < DAYS; day++) {
-                LocalDate date = LocalDate.now().plusDays(day);
+                LocalDate startDate = flightRepository.findMaxDepartureDate()
+                        .map(d -> d.toLocalDate().plusDays(1))
+                        .orElse(LocalDate.now());
+
+                LocalDate date = startDate.plusDays(day);
 
                 for (String[] route : routes) {
                     for (String[] airline : airlines) {
@@ -106,8 +108,7 @@ public class DataRefreshService {
             // ✅ BATCH SAVE FLIGHTS
             for (int i = 0; i < flights.size(); i += 100) {
                 flightRepository.saveAll(
-                        flights.subList(i, Math.min(i + 100, flights.size()))
-                );
+                        flights.subList(i, Math.min(i + 100, flights.size())));
             }
 
             // ✅ SEATS
@@ -134,8 +135,7 @@ public class DataRefreshService {
             // ✅ BATCH SAVE SEATS
             for (int i = 0; i < seats.size(); i += 200) {
                 seatRepository.saveAll(
-                        seats.subList(i, Math.min(i + 200, seats.size()))
-                );
+                        seats.subList(i, Math.min(i + 200, seats.size())));
             }
 
             log.warn("✅ DATA REFRESH COMPLETED");
