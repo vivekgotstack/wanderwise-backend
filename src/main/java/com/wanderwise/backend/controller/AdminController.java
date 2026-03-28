@@ -11,21 +11,15 @@ public class AdminController {
 
     private final DataRefreshService dataRefreshService;
 
-    @PostMapping("/refresh")
-    public String refresh() {
+    @PostMapping("/seed")
+    public String seed() {
+        new Thread(() -> dataRefreshService.seedInitialData()).start();
+        return "Seeding started";
+    }
 
-        if (dataRefreshService.isRunning()) {
-            return "Refresh already running";
-        }
-
-        new Thread(() -> {
-            try {
-                dataRefreshService.refreshData();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
-
-        return "Refresh started in background";
+    @PostMapping("/roll")
+    public String roll() {
+        new Thread(() -> dataRefreshService.rollOneDay()).start();
+        return "Rolling started";
     }
 }

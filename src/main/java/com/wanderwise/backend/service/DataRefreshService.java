@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -27,7 +28,6 @@ public class DataRefreshService {
     private final BookingRepository bookingRepository;
 
     private final Random random = new Random();
-
     private volatile boolean running = false;
 
     public boolean isRunning() {
@@ -35,113 +35,147 @@ public class DataRefreshService {
     }
 
     private final List<String[]> routes = List.of(
-            new String[] { "DEL", "MUM" },
-            new String[] { "DEL", "BLR" },
-            new String[] { "DEL", "HYD" },
-            new String[] { "MUM", "BLR" },
-            new String[] { "BLR", "HYD" },
-            new String[] { "DEL", "CCU" },
-            new String[] { "DEL", "MAA" },
-            new String[] { "MUM", "GOI" },
-            new String[] { "DEL", "LKO" });
+            new String[]{"DEL", "MUM"},
+            new String[]{"DEL", "BLR"},
+            new String[]{"DEL", "HYD"},
+            new String[]{"MUM", "BLR"},
+            new String[]{"BLR", "HYD"},
+            new String[]{"DEL", "CCU"},
+            new String[]{"DEL", "MAA"},
+            new String[]{"MUM", "GOI"},
+            new String[]{"DEL", "LKO"}
+    );
 
     private final List<String[]> airlines = List.of(
-            new String[] { "IndiGo", "6E" },
-            new String[] { "Air India", "AI" },
-            new String[] { "Vistara", "UK" },
-            new String[] { "Akasa Air", "QP" });
+            new String[]{"IndiGo", "6E"},
+            new String[]{"Air India", "AI"},
+            new String[]{"Vistara", "UK"},
+            new String[]{"Akasa Air", "QP"}
+    );
 
-    public void refreshData() {
+    // 🔥 INITIAL SEED (30 DAYS)
+    @Transactional
+    public void seedInitialData() {
+
+        log.warn("🚀 INITIAL 30 DAY SEED");
+
+        bookingRepository.deleteAll();
+        seatRepository.deleteAll();
+        flightRepository.deleteAll();
+
+        generateDays(LocalDate.now(), 30);
+
+        log.warn("✅ INITIAL DATA READY");
+    }
+
+    // 🔥 DAILY ROLL
+    @Transactional
+    public void rollOneDay() {
 
         if (running) {
-            log.warn("⚠️ Refresh already running");
+            log.warn("⚠️ Already running");
             return;
         }
 
         running = true;
 
         try {
-            log.warn("🔥 STARTING MONTHLY DATA REFRESH");
+            log.warn("🔄 ROLLING DATA WINDOW");
 
-            // bookingRepository.deleteAll();
-            // seatRepository.deleteAll();
-            // flightRepository.deleteAll();
+            LocalDate oldestDate = flightRepository.findMinDepartureDate()
+                    .map(d -> d.toLocalDate())
+                    .orElse(LocalDate.now());
 
-            int DAYS = 5; // 🔥 SAFE
-            int SLOTS = 3; // 🔥 SAFE
-            int SEATS = 20; // 🔥 SAFE
+            // ❗ delete seats first
+            seatRepository.deleteByFlightDepartureDate(oldestDate);
 
-            List<Flight> flights = new ArrayList<>();
+            // then flights
+            flightRepository.deleteByDepartureDate(oldestDate);
 
-            for (int day = 0; day < DAYS; day++) {
-                LocalDate startDate = flightRepository.findMaxDepartureDate()
-                        .map(d -> d.toLocalDate().plusDays(1))
-                        .orElse(LocalDate.now());
+            LocalDate latestDate = flightRepository.findMaxDepartureDate()
+                    .map(d -> d.toLocalDate())
+                    .orElse(LocalDate.now());
 
-                LocalDate date = startDate.plusDays(day);
+            LocalDate newDate = latestDate.plusDays(1);
 
-                for (String[] route : routes) {
-                    for (String[] airline : airlines) {
+            generateDays(newDate, 1);
 
-                        for (int slot = 0; slot < SLOTS; slot++) {
-
-                            LocalDateTime dep = date.atTime(6 + slot * 3, 0);
-                            LocalDateTime arr = dep.plusHours(2 + random.nextInt(2));
-
-                            Flight f = new Flight();
-                            f.setAirline(airline[0]);
-                            f.setFlightNumber(airline[1] + "-" + (100 + random.nextInt(900)));
-                            f.setSource(route[0]);
-                            f.setDestination(route[1]);
-                            f.setDepartureTime(dep);
-                            f.setArrivalTime(arr);
-                            f.setTotalSeats(SEATS * 2);
-                            f.setAvailableSeats(SEATS * 2);
-                            f.setBasePrice(BigDecimal.valueOf(3000 + random.nextInt(3000)));
-
-                            flights.add(f);
-                        }
-                    }
-                }
-            }
-
-            // ✅ BATCH SAVE FLIGHTS
-            for (int i = 0; i < flights.size(); i += 100) {
-                flightRepository.saveAll(
-                        flights.subList(i, Math.min(i + 100, flights.size())));
-            }
-
-            // ✅ SEATS
-            List<Seat> seats = new ArrayList<>();
-
-            for (Flight f : flights) {
-                for (int i = 1; i <= SEATS; i++) {
-
-                    Seat s1 = new Seat();
-                    s1.setFlight(f);
-                    s1.setSeatNumber("A" + i);
-                    s1.setStatus(random.nextDouble() < 0.1 ? SeatStatus.BOOKED : SeatStatus.AVAILABLE);
-
-                    Seat s2 = new Seat();
-                    s2.setFlight(f);
-                    s2.setSeatNumber("B" + i);
-                    s2.setStatus(random.nextDouble() < 0.1 ? SeatStatus.BOOKED : SeatStatus.AVAILABLE);
-
-                    seats.add(s1);
-                    seats.add(s2);
-                }
-            }
-
-            // ✅ BATCH SAVE SEATS
-            for (int i = 0; i < seats.size(); i += 200) {
-                seatRepository.saveAll(
-                        seats.subList(i, Math.min(i + 200, seats.size())));
-            }
-
-            log.warn("✅ DATA REFRESH COMPLETED");
+            log.warn("✅ ROLL COMPLETE: removed {}, added {}", oldestDate, newDate);
 
         } finally {
             running = false;
         }
+    }
+
+    // 🔥 CORE GENERATOR
+    private void generateDays(LocalDate startDate, int days) {
+
+        int SLOTS = 3;
+        int SEATS = 20;
+
+        List<Flight> flights = new ArrayList<>();
+
+        for (int day = 0; day < days; day++) {
+
+            LocalDate date = startDate.plusDays(day);
+
+            for (String[] route : routes) {
+                for (String[] airline : airlines) {
+
+                    for (int slot = 0; slot < SLOTS; slot++) {
+
+                        LocalDateTime dep = date.atTime(6 + slot * 3, 0);
+                        LocalDateTime arr = dep.plusHours(2 + random.nextInt(2));
+
+                        Flight f = new Flight();
+                        f.setAirline(airline[0]);
+                        f.setFlightNumber(airline[1] + "-" + (100 + random.nextInt(900)));
+                        f.setSource(route[0]);
+                        f.setDestination(route[1]);
+                        f.setDepartureTime(dep);
+                        f.setArrivalTime(arr);
+
+                        int total = SEATS * 2;
+                        int booked = random.nextInt(total / 2);
+
+                        f.setTotalSeats(total);
+                        f.setAvailableSeats(total - booked);
+
+                        f.setBasePrice(BigDecimal.valueOf(3000 + random.nextInt(3000)));
+
+                        flights.add(f);
+                    }
+                }
+            }
+        }
+
+        flightRepository.saveAll(flights);
+
+        // seats
+        List<Seat> seats = new ArrayList<>();
+
+        for (Flight f : flights) {
+
+            int bookedSeats = f.getTotalSeats() - f.getAvailableSeats();
+            int counter = 0;
+
+            for (int i = 1; i <= SEATS; i++) {
+
+                Seat s1 = new Seat();
+                s1.setFlight(f);
+                s1.setSeatNumber("A" + i);
+                s1.setStatus(counter++ < bookedSeats ? SeatStatus.BOOKED : SeatStatus.AVAILABLE);
+
+                Seat s2 = new Seat();
+                s2.setFlight(f);
+                s2.setSeatNumber("B" + i);
+                s2.setStatus(counter++ < bookedSeats ? SeatStatus.BOOKED : SeatStatus.AVAILABLE);
+
+                seats.add(s1);
+                seats.add(s2);
+            }
+        }
+
+        seatRepository.saveAll(seats);
     }
 }

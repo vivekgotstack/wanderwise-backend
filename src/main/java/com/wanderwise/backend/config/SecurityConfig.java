@@ -16,18 +16,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-
-                // 🔥 IMPORTANT: enable CORS using our configuration source
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
                 .authorizeHttpRequests(auth -> auth
-                        // allow preflight requests (VERY IMPORTANT for CORS)
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // your APIs (open for now)
                         .requestMatchers("/api/**").permitAll()
-
-                        // everything else
                         .anyRequest().permitAll()
                 );
 
@@ -38,7 +30,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(List.of(
+        config.setAllowedOriginPatterns(List.of(
                 "http://localhost:5173",
                 "https://wanderwise-lime.vercel.app"
         ));
@@ -50,8 +42,6 @@ public class SecurityConfig {
         config.setAllowedHeaders(List.of("*"));
 
         config.setAllowCredentials(true);
-
-        config.setExposedHeaders(List.of("Authorization"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

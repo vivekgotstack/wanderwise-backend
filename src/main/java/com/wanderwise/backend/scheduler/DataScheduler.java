@@ -14,10 +14,10 @@ public class DataScheduler {
 
     private final DataRefreshService dataRefreshService;
 
-    // Runs 1st day of every month at 2 AM
-    @Scheduled(cron = "0 0 2 1 * ?")
-    public void runMonthlyRefresh() {
-        log.warn("⏰ Monthly job triggered");
-        dataRefreshService.refreshData();
+    // every day 2 AM
+    @Scheduled(cron = "0 0 2 * * ?")
+    public void runDailyRoll() {
+        log.warn("⏰ DAILY ROLL TRIGGERED");
+        dataRefreshService.rollOneDay();
     }
 }
