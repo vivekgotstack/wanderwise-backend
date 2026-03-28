@@ -29,14 +29,14 @@ public class DataRefreshService {
     private final Random random = new Random();
 
     private final List<String[]> routes = List.of(
-            new String[]{"DEL", "BOM"},
+            new String[]{"DEL", "MUM"},
             new String[]{"DEL", "BLR"},
             new String[]{"DEL", "HYD"},
-            new String[]{"BOM", "BLR"},
+            new String[]{"MUM", "BLR"},
             new String[]{"BLR", "HYD"},
             new String[]{"DEL", "CCU"},
             new String[]{"DEL", "MAA"},
-            new String[]{"BOM", "GOI"},
+            new String[]{"MUM", "GOI"},
             new String[]{"DEL", "LKO"}
     );
 
