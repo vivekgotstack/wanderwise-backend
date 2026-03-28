@@ -13,6 +13,11 @@ public class AdminController {
 
     @PostMapping("/refresh")
     public String refresh() {
+
+        if (dataRefreshService.isRunning()) {
+            return "Refresh already running";
+        }
+
         new Thread(() -> {
             try {
                 dataRefreshService.refreshData();
