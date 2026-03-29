@@ -21,8 +21,8 @@ public class AdminController {
     // 🔥 append more data (KEY)
     @PostMapping("/append")
     public String append() {
-        dataRefreshService.appendData(2); // add 2 days each call
-        return "Appended 2 more days";
+        dataRefreshService.appendData(5); // add 5 days each call
+        return "Appended 5 more days";
     }
 
     // 🔥 roll window
