@@ -35,23 +35,21 @@ public class DataRefreshService {
     }
 
     private final List<String[]> routes = List.of(
-            new String[]{"DEL", "MUM"},
-            new String[]{"DEL", "BLR"},
-            new String[]{"DEL", "HYD"},
-            new String[]{"MUM", "BLR"},
-            new String[]{"BLR", "HYD"},
-            new String[]{"DEL", "CCU"},
-            new String[]{"DEL", "MAA"},
-            new String[]{"MUM", "GOI"},
-            new String[]{"DEL", "LKO"}
-    );
+            new String[] { "DEL", "MUM" },
+            new String[] { "DEL", "BLR" },
+            new String[] { "DEL", "HYD" },
+            new String[] { "MUM", "BLR" },
+            new String[] { "BLR", "HYD" },
+            new String[] { "DEL", "CCU" },
+            new String[] { "DEL", "MAA" },
+            new String[] { "MUM", "GOI" },
+            new String[] { "DEL", "LKO" });
 
     private final List<String[]> airlines = List.of(
-            new String[]{"IndiGo", "6E"},
-            new String[]{"Air India", "AI"},
-            new String[]{"Vistara", "UK"},
-            new String[]{"Akasa Air", "QP"}
-    );
+            new String[] { "IndiGo", "6E" },
+            new String[] { "Air India", "AI" },
+            new String[] { "Vistara", "UK" },
+            new String[] { "Akasa Air", "QP" });
 
     // 🔥 INITIAL SMALL SEED (SUPER STABLE)
     public void seedInitialData() {
@@ -139,8 +137,8 @@ public class DataRefreshService {
     // 🔥 CORE GENERATOR (CONTROLLED)
     public void generateDays(LocalDate startDate, int days) {
 
-        int SLOTS = 2;
-        int SEATS = 10;
+        int SLOTS = 5 + random.nextInt(3); // 5–7 flights per airline
+        int SEATS = 35 + random.nextInt(20); // 35–55 rows → 70–110 seats
 
         List<Flight> flights = new ArrayList<>();
 
@@ -217,8 +215,7 @@ public class DataRefreshService {
     public void saveSeats(List<Seat> seats) {
         for (int i = 0; i < seats.size(); i += 200) {
             seatRepository.saveAll(
-                    seats.subList(i, Math.min(i + 200, seats.size()))
-            );
+                    seats.subList(i, Math.min(i + 200, seats.size())));
         }
     }
 }
