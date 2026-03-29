@@ -15,7 +15,7 @@ public class AdminController {
     @PostMapping("/seed")
     public String seed() {
         dataRefreshService.seedInitialData();
-        return "Seeded initial data (3 days)";
+        return "Seeded initial data (5 days)";
     }
 
     // 🔥 append more data (KEY)
