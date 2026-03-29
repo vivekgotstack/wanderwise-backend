@@ -30,4 +30,9 @@ public class BookingController {
     public List<Booking> getUserBookings(@PathVariable Long userId) {
         return bookingService.getUserBookings(userId);
     }
+
+    @PostMapping("/{bookingId}/cancel")
+    public String cancelBooking(@PathVariable Long bookingId) {
+        return bookingService.cancelBooking(bookingId);
+    }
 }

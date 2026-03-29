@@ -53,17 +53,17 @@ public class DataRefreshService {
             new String[]{"Akasa Air", "QP"}
     );
 
-    // 🔥 INITIAL SEED
+    // 🔥 INITIAL SEED → NOW 5 DAYS
     public void seedInitialData() {
-        log.warn("🚀 INITIAL 3 DAY SEED");
+        log.warn("🚀 INITIAL 5 DAY SEED");
 
         deleteAllData();
-        generateDays(LocalDate.now(), 3);
+        generateDays(LocalDate.now(), 5);
 
         log.warn("✅ INITIAL DATA READY");
     }
 
-    // 🔥 APPEND
+    // 🔥 APPEND (UNCHANGED)
     public void appendData(int days) {
 
         if (running) {
@@ -89,7 +89,7 @@ public class DataRefreshService {
         }
     }
 
-    // 🔥 DAILY ROLL
+    // 🔥 DAILY ROLL (UNCHANGED)
     public void rollOneDay() {
 
         if (running) {
@@ -134,11 +134,11 @@ public class DataRefreshService {
         flightRepository.deleteByDepartureDate(date);
     }
 
-    // 🔥 CORE GENERATOR
+    // 🔥 CORE GENERATOR (UPDATED SEAT SIZE ONLY)
     public void generateDays(LocalDate startDate, int days) {
 
-        int SLOTS = 5 + random.nextInt(3); // 5–7 slots
-        int SEATS = 35 + random.nextInt(20); // 35–55 rows → 70–110 seats
+        int SLOTS = 5 + random.nextInt(3); // unchanged (5–7)
+        int SEATS = 25 + random.nextInt(6); // 🔥 25–30 rows → 50–60 seats
 
         List<Flight> flights = new ArrayList<>();
 
@@ -151,7 +151,7 @@ public class DataRefreshService {
 
                     for (int slot = 0; slot < SLOTS; slot++) {
 
-                        // ✅ SAFE TIME (NO 24 ERROR)
+                        // SAFE TIME
                         int hour = 6 + slot * 3;
                         hour = hour % 24;
                         if (hour < 6) hour += 6;
@@ -169,7 +169,7 @@ public class DataRefreshService {
 
                         int total = SEATS * 2;
 
-                        // ✅ MAX 40% BOOKED (random)
+                        // 🔥 MAX 40% booked
                         int booked = (int) (total * (random.nextDouble() * 0.4));
 
                         f.setTotalSeats(total);

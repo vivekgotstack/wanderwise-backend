@@ -125,6 +125,47 @@ public class BookingService {
         return bookingRepository.save(booking);
     }
 
+    @Transactional
+    public String cancelBooking(Long bookingId) {
+
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        if (booking.getStatus() == BookingStatus.FAILED) {
+            return "Booking already failed";
+        }
+
+        List<Seat> seats = booking.getSeats();
+
+        // 🔥 RELEASE SEATS
+        for (Seat seat : seats) {
+            seat.setStatus(SeatStatus.AVAILABLE);
+            seat.setBookedBy(null);
+            seat.setLockedAt(null);
+        }
+
+        seatRepository.saveAll(seats);
+
+        // 🔥 UPDATE FLIGHT AVAILABLE SEATS
+        Flight flight = booking.getFlight();
+
+        long available = seatRepository.countByFlightIdAndStatus(
+                flight.getId(),
+                SeatStatus.AVAILABLE
+        );
+
+        flight.setAvailableSeats((int) available);
+        flightRepository.save(flight);
+
+        // 🔥 UPDATE BOOKING STATUS
+        booking.setStatus(BookingStatus.FAILED);
+        bookingRepository.save(booking);
+
+        log.warn("❌ Booking {} failed", bookingId);
+
+        return "Booking failed successfully";
+    }
+
     public List<Booking> getUserBookings(Long userId) {
         return bookingRepository.findByUserId(userId);
     }
