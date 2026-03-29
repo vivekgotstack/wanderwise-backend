@@ -14,6 +14,10 @@ public class SeatService {
     private final SeatRepository seatRepository;
 
     public List<Seat> getSeatsByFlight(Long flightId) {
-        return seatRepository.findByFlightId(flightId);
+        List<Seat> seats = seatRepository.findByFlightId(flightId);
+    
+        System.out.println("DEBUG → flightId=" + flightId + ", seats=" + seats.size());
+    
+        return seats;
     }
 }

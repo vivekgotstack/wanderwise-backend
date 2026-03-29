@@ -53,23 +53,18 @@ public class DataRefreshService {
             new String[]{"Akasa Air", "QP"}
     );
 
-    // 🔥 INITIAL SEED (30 DAYS)
-    @Transactional
+    // 🔥 INITIAL SEED
     public void seedInitialData() {
 
         log.warn("🚀 INITIAL 30 DAY SEED");
 
-        bookingRepository.deleteAll();
-        seatRepository.deleteAll();
-        flightRepository.deleteAll();
-
+        deleteAllData();
         generateDays(LocalDate.now(), 30);
 
         log.warn("✅ INITIAL DATA READY");
     }
 
     // 🔥 DAILY ROLL
-    @Transactional
     public void rollOneDay() {
 
         if (running) {
@@ -86,11 +81,7 @@ public class DataRefreshService {
                     .map(d -> d.toLocalDate())
                     .orElse(LocalDate.now());
 
-            // ❗ delete seats first
-            seatRepository.deleteByFlightDepartureDate(oldestDate);
-
-            // then flights
-            flightRepository.deleteByDepartureDate(oldestDate);
+            deleteDay(oldestDate);
 
             LocalDate latestDate = flightRepository.findMaxDepartureDate()
                     .map(d -> d.toLocalDate())
@@ -107,8 +98,23 @@ public class DataRefreshService {
         }
     }
 
+    // 🔥 DELETE ALL (TRANSACTION SAFE)
+    @Transactional
+    public void deleteAllData() {
+        bookingRepository.deleteAll();
+        seatRepository.deleteAll();
+        flightRepository.deleteAll();
+    }
+
+    // 🔥 DELETE ONE DAY (TRANSACTION SAFE)
+    @Transactional
+    public void deleteDay(LocalDate date) {
+        seatRepository.deleteByFlightDepartureDate(date);
+        flightRepository.deleteByDepartureDate(date);
+    }
+
     // 🔥 CORE GENERATOR
-    private void generateDays(LocalDate startDate, int days) {
+    public void generateDays(LocalDate startDate, int days) {
 
         int SLOTS = 3;
         int SEATS = 20;
@@ -140,7 +146,6 @@ public class DataRefreshService {
 
                         f.setTotalSeats(total);
                         f.setAvailableSeats(total - booked);
-
                         f.setBasePrice(BigDecimal.valueOf(3000 + random.nextInt(3000)));
 
                         flights.add(f);
@@ -149,12 +154,13 @@ public class DataRefreshService {
             }
         }
 
-        flightRepository.saveAll(flights);
+        // ✅ SAVE FLIGHTS FIRST
+        List<Flight> savedFlights = saveFlights(flights);
 
-        // seats
+        // ✅ THEN SEATS
         List<Seat> seats = new ArrayList<>();
 
-        for (Flight f : flights) {
+        for (Flight f : savedFlights) {
 
             int bookedSeats = f.getTotalSeats() - f.getAvailableSeats();
             int counter = 0;
@@ -176,6 +182,21 @@ public class DataRefreshService {
             }
         }
 
-        seatRepository.saveAll(seats);
+        saveSeats(seats);
+    }
+
+    // 🔥 TRANSACTION SPLIT
+    @Transactional
+    public List<Flight> saveFlights(List<Flight> flights) {
+        return flightRepository.saveAll(flights);
+    }
+
+    @Transactional
+    public void saveSeats(List<Seat> seats) {
+        for (int i = 0; i < seats.size(); i += 200) {
+            seatRepository.saveAll(
+                    seats.subList(i, Math.min(i + 200, seats.size()))
+            );
+        }
     }
 }
