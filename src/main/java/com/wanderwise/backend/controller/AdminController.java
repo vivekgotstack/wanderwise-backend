@@ -11,15 +11,17 @@ public class AdminController {
 
     private final DataRefreshService dataRefreshService;
 
+    // 🔥 INITIAL SEED (RUN ONCE)
     @PostMapping("/seed")
     public String seed() {
-        new Thread(() -> dataRefreshService.seedInitialData()).start();
-        return "Seeding started";
+        dataRefreshService.seedInitialData();
+        return "Initial data seeded";
     }
 
+    // 🔥 DAILY ROLL
     @PostMapping("/roll")
     public String roll() {
-        new Thread(() -> dataRefreshService.rollOneDay()).start();
-        return "Rolling started";
+        dataRefreshService.rollOneDay();
+        return "Rolled one day";
     }
 }
