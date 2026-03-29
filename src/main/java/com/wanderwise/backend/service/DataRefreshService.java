@@ -35,35 +35,35 @@ public class DataRefreshService {
     }
 
     private final List<String[]> routes = List.of(
-            new String[] { "DEL", "MUM" },
-            new String[] { "DEL", "BLR" },
-            new String[] { "DEL", "HYD" },
-            new String[] { "MUM", "BLR" },
-            new String[] { "BLR", "HYD" },
-            new String[] { "DEL", "CCU" },
-            new String[] { "DEL", "MAA" },
-            new String[] { "MUM", "GOI" },
-            new String[] { "DEL", "LKO" });
+            new String[]{"DEL", "MUM"},
+            new String[]{"DEL", "BLR"},
+            new String[]{"DEL", "HYD"},
+            new String[]{"MUM", "BLR"},
+            new String[]{"BLR", "HYD"},
+            new String[]{"DEL", "CCU"},
+            new String[]{"DEL", "MAA"},
+            new String[]{"MUM", "GOI"},
+            new String[]{"DEL", "LKO"}
+    );
 
     private final List<String[]> airlines = List.of(
-            new String[] { "IndiGo", "6E" },
-            new String[] { "Air India", "AI" },
-            new String[] { "Vistara", "UK" },
-            new String[] { "Akasa Air", "QP" });
+            new String[]{"IndiGo", "6E"},
+            new String[]{"Air India", "AI"},
+            new String[]{"Vistara", "UK"},
+            new String[]{"Akasa Air", "QP"}
+    );
 
-    // 🔥 INITIAL SMALL SEED (SUPER STABLE)
+    // 🔥 INITIAL SEED
     public void seedInitialData() {
-
         log.warn("🚀 INITIAL 3 DAY SEED");
 
         deleteAllData();
-
-        generateDays(LocalDate.now(), 3); // ✅ VERY SAFE
+        generateDays(LocalDate.now(), 3);
 
         log.warn("✅ INITIAL DATA READY");
     }
 
-    // 🔥 APPEND MORE DATA (KEY FEATURE)
+    // 🔥 APPEND
     public void appendData(int days) {
 
         if (running) {
@@ -89,7 +89,7 @@ public class DataRefreshService {
         }
     }
 
-    // 🔥 DAILY ROLL (UNCHANGED)
+    // 🔥 DAILY ROLL
     public void rollOneDay() {
 
         if (running) {
@@ -134,10 +134,10 @@ public class DataRefreshService {
         flightRepository.deleteByDepartureDate(date);
     }
 
-    // 🔥 CORE GENERATOR (CONTROLLED)
+    // 🔥 CORE GENERATOR
     public void generateDays(LocalDate startDate, int days) {
 
-        int SLOTS = 5 + random.nextInt(3); // 5–7 flights per airline
+        int SLOTS = 5 + random.nextInt(3); // 5–7 slots
         int SEATS = 35 + random.nextInt(20); // 35–55 rows → 70–110 seats
 
         List<Flight> flights = new ArrayList<>();
@@ -151,7 +151,12 @@ public class DataRefreshService {
 
                     for (int slot = 0; slot < SLOTS; slot++) {
 
-                        LocalDateTime dep = date.atTime(6 + slot * 3, 0);
+                        // ✅ SAFE TIME (NO 24 ERROR)
+                        int hour = 6 + slot * 3;
+                        hour = hour % 24;
+                        if (hour < 6) hour += 6;
+
+                        LocalDateTime dep = date.atTime(hour, 0);
                         LocalDateTime arr = dep.plusHours(2 + random.nextInt(2));
 
                         Flight f = new Flight();
@@ -163,11 +168,13 @@ public class DataRefreshService {
                         f.setArrivalTime(arr);
 
                         int total = SEATS * 2;
-                        int booked = random.nextInt(total / 2);
+
+                        // ✅ MAX 40% BOOKED (random)
+                        int booked = (int) (total * (random.nextDouble() * 0.4));
 
                         f.setTotalSeats(total);
                         f.setAvailableSeats(total - booked);
-                        f.setBasePrice(BigDecimal.valueOf(3000 + random.nextInt(3000)));
+                        f.setBasePrice(BigDecimal.valueOf(3000 + random.nextInt(4000)));
 
                         flights.add(f);
                     }
@@ -215,7 +222,8 @@ public class DataRefreshService {
     public void saveSeats(List<Seat> seats) {
         for (int i = 0; i < seats.size(); i += 200) {
             seatRepository.saveAll(
-                    seats.subList(i, Math.min(i + 200, seats.size())));
+                    seats.subList(i, Math.min(i + 200, seats.size()))
+            );
         }
     }
 }
