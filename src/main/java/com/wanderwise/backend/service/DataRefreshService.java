@@ -35,34 +35,63 @@ public class DataRefreshService {
     }
 
     private final List<String[]> routes = List.of(
-            new String[] { "DEL", "MUM" },
-            new String[] { "DEL", "BLR" },
-            new String[] { "DEL", "HYD" },
-            new String[] { "MUM", "BLR" },
-            new String[] { "BLR", "HYD" },
-            new String[] { "DEL", "CCU" },
-            new String[] { "DEL", "MAA" },
-            new String[] { "MUM", "GOI" },
-            new String[] { "DEL", "LKO" });
+            new String[]{"DEL", "MUM"},
+            new String[]{"DEL", "BLR"},
+            new String[]{"DEL", "HYD"},
+            new String[]{"MUM", "BLR"},
+            new String[]{"BLR", "HYD"},
+            new String[]{"DEL", "CCU"},
+            new String[]{"DEL", "MAA"},
+            new String[]{"MUM", "GOI"},
+            new String[]{"DEL", "LKO"}
+    );
 
     private final List<String[]> airlines = List.of(
-            new String[] { "IndiGo", "6E" },
-            new String[] { "Air India", "AI" },
-            new String[] { "Vistara", "UK" },
-            new String[] { "Akasa Air", "QP" });
+            new String[]{"IndiGo", "6E"},
+            new String[]{"Air India", "AI"},
+            new String[]{"Vistara", "UK"},
+            new String[]{"Akasa Air", "QP"}
+    );
 
-    // 🔥 INITIAL SEED
+    // 🔥 INITIAL SMALL SEED (SUPER STABLE)
     public void seedInitialData() {
 
-        log.warn("🚀 INITIAL 30 DAY SEED");
+        log.warn("🚀 INITIAL 3 DAY SEED");
 
         deleteAllData();
-        generateDays(LocalDate.now(), 30);
+
+        generateDays(LocalDate.now(), 3); // ✅ VERY SAFE
 
         log.warn("✅ INITIAL DATA READY");
     }
 
-    // 🔥 DAILY ROLL
+    // 🔥 APPEND MORE DATA (KEY FEATURE)
+    public void appendData(int days) {
+
+        if (running) {
+            log.warn("⚠️ Already running");
+            return;
+        }
+
+        running = true;
+
+        try {
+            LocalDate startDate = flightRepository.findMaxDepartureDate()
+                    .map(d -> d.toLocalDate().plusDays(1))
+                    .orElse(LocalDate.now());
+
+            log.warn("➕ APPENDING {} days from {}", days, startDate);
+
+            generateDays(startDate, days);
+
+            log.warn("✅ APPEND COMPLETE");
+
+        } finally {
+            running = false;
+        }
+    }
+
+    // 🔥 DAILY ROLL (UNCHANGED)
     public void rollOneDay() {
 
         if (running) {
@@ -73,8 +102,6 @@ public class DataRefreshService {
         running = true;
 
         try {
-            log.warn("🔄 ROLLING DATA WINDOW");
-
             LocalDate oldestDate = flightRepository.findMinDepartureDate()
                     .map(d -> d.toLocalDate())
                     .orElse(LocalDate.now());
@@ -89,14 +116,13 @@ public class DataRefreshService {
 
             generateDays(newDate, 1);
 
-            log.warn("✅ ROLL COMPLETE: removed {}, added {}", oldestDate, newDate);
+            log.warn("🔄 WINDOW SHIFT DONE");
 
         } finally {
             running = false;
         }
     }
 
-    // 🔥 DELETE ALL (TRANSACTION SAFE)
     @Transactional
     public void deleteAllData() {
         bookingRepository.deleteAll();
@@ -104,18 +130,17 @@ public class DataRefreshService {
         flightRepository.deleteAll();
     }
 
-    // 🔥 DELETE ONE DAY (TRANSACTION SAFE)
     @Transactional
     public void deleteDay(LocalDate date) {
         seatRepository.deleteByFlightDepartureDate(date);
         flightRepository.deleteByDepartureDate(date);
     }
 
-    // 🔥 CORE GENERATOR
+    // 🔥 CORE GENERATOR (CONTROLLED)
     public void generateDays(LocalDate startDate, int days) {
 
-        int SLOTS = 3;
-        int SEATS = 20;
+        int SLOTS = 2;
+        int SEATS = 10;
 
         List<Flight> flights = new ArrayList<>();
 
@@ -152,10 +177,8 @@ public class DataRefreshService {
             }
         }
 
-        // ✅ SAVE FLIGHTS FIRST
         List<Flight> savedFlights = saveFlights(flights);
 
-        // ✅ THEN SEATS
         List<Seat> seats = new ArrayList<>();
 
         for (Flight f : savedFlights) {
@@ -186,7 +209,7 @@ public class DataRefreshService {
     @Transactional
     public List<Flight> saveFlights(List<Flight> flights) {
         List<Flight> saved = flightRepository.saveAll(flights);
-        flightRepository.flush(); // 🔥 CRITICAL FIX
+        flightRepository.flush();
         return saved;
     }
 
@@ -194,7 +217,8 @@ public class DataRefreshService {
     public void saveSeats(List<Seat> seats) {
         for (int i = 0; i < seats.size(); i += 200) {
             seatRepository.saveAll(
-                    seats.subList(i, Math.min(i + 200, seats.size())));
+                    seats.subList(i, Math.min(i + 200, seats.size()))
+            );
         }
     }
 }
