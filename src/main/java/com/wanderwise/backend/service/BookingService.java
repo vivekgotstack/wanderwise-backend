@@ -161,9 +161,25 @@ public class BookingService {
         booking.setStatus(BookingStatus.FAILED);
         bookingRepository.save(booking);
 
-        log.warn("❌ Booking {} failed", bookingId);
-
         return "Booking failed successfully";
+    }
+
+    @Transactional
+    public String deleteBooking(Long bookingId) {
+
+        Booking booking = bookingRepository.findById(bookingId)
+            .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        // 🔥 Safety: allow delete only if FAILED (cancelled)
+        if (booking.getStatus() != BookingStatus.FAILED) {
+            throw new RuntimeException("Only cancelled bookings can be deleted");
+        }
+
+        bookingRepository.delete(booking);
+
+        log.warn("🗑️ Booking {} deleted permanently", bookingId);
+
+        return "Booking deleted permanently";
     }
 
     public List<Booking> getUserBookings(Long userId) {
