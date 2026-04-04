@@ -18,4 +18,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT b FROM Booking b WHERE b.id = :id")
     Optional<Booking> findByIdForUpdate(@Param("id") Long id);
+
+    @Query("SELECT b FROM Booking b WHERE b.id = :id AND b.userId = :userId")
+    Optional<Booking> findByIdAndUserId(Long id, Long userId);
 }

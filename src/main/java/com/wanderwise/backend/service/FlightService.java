@@ -23,31 +23,29 @@ public class FlightService {
         LocalDateTime endOfDay = startOfDay.plusDays(1);
 
         return flightRepository.findBySourceAndDestinationAndDepartureTimeBetween(
-                source, destination, startOfDay, endOfDay
-        );
+                source, destination, startOfDay, endOfDay);
     }
+
     public Page<Flight> searchFlights(
-    String source,
-    String destination,
-    LocalDateTime date,
-    int page,
-    int size,
-    String sortBy,
-    String direction
-) {
+            String source,
+            String destination,
+            LocalDateTime date,
+            int page,
+            int size,
+            String sortBy,
+            String direction) {
 
-    LocalDateTime start = date.toLocalDate().atStartOfDay();
-    LocalDateTime end = start.plusDays(1);
+        LocalDateTime start = date.toLocalDate().atStartOfDay();
+        LocalDateTime end = start.plusDays(1);
 
-    Sort sort = direction.equalsIgnoreCase("desc")
-        ? Sort.by(sortBy).descending()
-        : Sort.by(sortBy).ascending();
+        Sort sort = direction.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
 
-    Pageable pageable = PageRequest.of(page, size, sort);
+        Pageable pageable = PageRequest.of(page, size, sort);
 
-    return flightRepository
-        .findBySourceAndDestinationAndDepartureTimeBetween(
-            source, destination, start, end, pageable
-        );
-}
+        return flightRepository
+                .findBySourceAndDestinationAndDepartureTimeBetween(
+                        source, destination, start, end, pageable);
+    }
 }

@@ -128,8 +128,11 @@ public class BookingService {
     @Transactional
     public String cancelBooking(Long bookingId) {
 
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
+        Long currentUserId = 1L; // TEMP FIX (important)
+
+        Booking booking = bookingRepository
+                .findByIdAndUserId(bookingId, currentUserId)
+                .orElseThrow(() -> new RuntimeException("Not allowed"));
 
         if (booking.getStatus() == BookingStatus.FAILED) {
             return "Booking already failed";
@@ -137,7 +140,6 @@ public class BookingService {
 
         List<Seat> seats = booking.getSeats();
 
-        // 🔥 RELEASE SEATS
         for (Seat seat : seats) {
             seat.setStatus(SeatStatus.AVAILABLE);
             seat.setBookedBy(null);
@@ -146,18 +148,15 @@ public class BookingService {
 
         seatRepository.saveAll(seats);
 
-        // 🔥 UPDATE FLIGHT AVAILABLE SEATS
         Flight flight = booking.getFlight();
 
         long available = seatRepository.countByFlightIdAndStatus(
                 flight.getId(),
-                SeatStatus.AVAILABLE
-        );
+                SeatStatus.AVAILABLE);
 
         flight.setAvailableSeats((int) available);
         flightRepository.save(flight);
 
-        // 🔥 UPDATE BOOKING STATUS
         booking.setStatus(BookingStatus.FAILED);
         bookingRepository.save(booking);
 
@@ -168,7 +167,7 @@ public class BookingService {
     public String deleteBooking(Long bookingId) {
 
         Booking booking = bookingRepository.findById(bookingId)
-            .orElseThrow(() -> new RuntimeException("Booking not found"));
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
 
         // 🔥 Safety: allow delete only if FAILED (cancelled)
         if (booking.getStatus() != BookingStatus.FAILED) {
