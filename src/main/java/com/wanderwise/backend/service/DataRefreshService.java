@@ -54,8 +54,7 @@ public class DataRefreshService {
     // 🔥 INITIAL SEED → NOW 5 DAYS
     public void seedInitialData() {
         log.warn("🚀 INITIAL 5 DAY SEED");
-
-        deleteAllData();
+        
         generateDays(LocalDate.now(), 5);
 
         log.warn("✅ INITIAL DATA READY");
