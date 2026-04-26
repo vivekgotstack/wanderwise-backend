@@ -35,23 +35,21 @@ public class DataRefreshService {
     }
 
     private final List<String[]> routes = List.of(
-            new String[]{"DEL", "MUM"},
-            new String[]{"DEL", "BLR"},
-            new String[]{"DEL", "HYD"},
-            new String[]{"MUM", "BLR"},
-            new String[]{"BLR", "HYD"},
-            new String[]{"DEL", "CCU"},
-            new String[]{"DEL", "MAA"},
-            new String[]{"MUM", "GOI"},
-            new String[]{"DEL", "LKO"}
-    );
+            new String[] { "DEL", "MUM" },
+            new String[] { "DEL", "BLR" },
+            new String[] { "DEL", "HYD" },
+            new String[] { "MUM", "BLR" },
+            new String[] { "BLR", "HYD" },
+            new String[] { "DEL", "CCU" },
+            new String[] { "DEL", "MAA" },
+            new String[] { "MUM", "GOI" },
+            new String[] { "DEL", "LKO" });
 
     private final List<String[]> airlines = List.of(
-            new String[]{"IndiGo", "6E"},
-            new String[]{"Air India", "AI"},
-            new String[]{"Vistara", "UK"},
-            new String[]{"Akasa Air", "QP"}
-    );
+            new String[] { "IndiGo", "6E" },
+            new String[] { "Air India", "AI" },
+            new String[] { "Vistara", "UK" },
+            new String[] { "Akasa Air", "QP" });
 
     // 🔥 INITIAL SEED → NOW 5 DAYS
     public void seedInitialData() {
@@ -123,9 +121,9 @@ public class DataRefreshService {
 
     @Transactional
     public void deleteAllData() {
-        bookingRepository.deleteAll();
-        seatRepository.deleteAll();
-        flightRepository.deleteAll();
+        bookingRepository.truncateBookings();
+        seatRepository.truncateSeats();
+        flightRepository.truncateFlights();
     }
 
     @Transactional
@@ -154,7 +152,8 @@ public class DataRefreshService {
                         // SAFE TIME
                         int hour = 6 + slot * 3;
                         hour = hour % 24;
-                        if (hour < 6) hour += 6;
+                        if (hour < 6)
+                            hour += 6;
 
                         LocalDateTime dep = date.atTime(hour, 0);
                         LocalDateTime arr = dep.plusHours(2 + random.nextInt(2));
@@ -222,8 +221,7 @@ public class DataRefreshService {
     public void saveSeats(List<Seat> seats) {
         for (int i = 0; i < seats.size(); i += 200) {
             seatRepository.saveAll(
-                    seats.subList(i, Math.min(i + 200, seats.size()))
-            );
+                    seats.subList(i, Math.min(i + 200, seats.size())));
         }
     }
 }
