@@ -35,6 +35,6 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
     long countByFlightIdAndStatus(Long flightId, SeatStatus status);
 
     @Modifying
-    @Query(value = "TRUNCATE TABLE seat RESTART IDENTITY CASCADE", nativeQuery = true)
+    @Query(value = "TRUNCATE TABLE seats RESTART IDENTITY CASCADE", nativeQuery = true)
     void truncateSeats();
 }

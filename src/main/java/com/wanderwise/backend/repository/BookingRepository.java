@@ -24,6 +24,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     Optional<Booking> findByIdAndUserId(Long id, Long userId);
 
     @Modifying
-    @Query(value = "TRUNCATE TABLE booking RESTART IDENTITY CASCADE", nativeQuery = true)
+    @Query(value = "TRUNCATE TABLE bookings RESTART IDENTITY CASCADE", nativeQuery = true)
     void truncateBookings();
 }

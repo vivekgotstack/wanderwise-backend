@@ -39,6 +39,6 @@ public interface FlightRepository extends JpaRepository<Flight, Long> {
         void deleteByDepartureDate(LocalDate date);
 
         @Modifying
-        @Query(value = "TRUNCATE TABLE flight RESTART IDENTITY CASCADE", nativeQuery = true)
+        @Query(value = "TRUNCATE TABLE flights RESTART IDENTITY CASCADE", nativeQuery = true)
         void truncateFlights();
 }
