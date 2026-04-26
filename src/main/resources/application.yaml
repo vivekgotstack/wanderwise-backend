@@ -6,8 +6,6 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/wanderwise}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${SPRING_DATASOURCE_PASSWORD:vivek1224@nigam}
-    hikari:
-      initialization-fail-timeout: 0
 
   jpa:
     hibernate:
