@@ -31,4 +31,11 @@ public class AdminController {
         dataRefreshService.rollOneDay();
         return "Rolled one day";
     }
+
+    // 🔥 delete all data
+    @PostMapping("/deleteAllData")
+    public String deleteAllData() {
+        dataRefreshService.deleteAllData();
+        return "Deleted all data";
+    }
 }
