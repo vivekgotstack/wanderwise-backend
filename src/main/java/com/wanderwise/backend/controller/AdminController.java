@@ -38,4 +38,9 @@ public class AdminController {
         dataRefreshService.deleteAllData();
         return "Deleted all data";
     }
+
+    @GetMapping("/ping")
+    public String renderHack(){
+        return "Alive";
+    }
 }
